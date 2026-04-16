@@ -1,15 +1,20 @@
-FROM maven:3.9-amazoncorretto-17 AS build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
 WORKDIR /app
+
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-FROM amazoncorretto:17-alpine-jdk
+
+FROM eclipse-temurin:17-jre-alpine
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
 
-# Forzamos a que Spring escuche en el puerto que Render define
-ENV PORT=8080
-EXPOSE 8080
+COPY --from=build /app/target/plantilla-main -0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar app.jar"]
+EXPOSE 8081
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
